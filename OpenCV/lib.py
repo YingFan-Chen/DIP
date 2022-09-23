@@ -1,4 +1,20 @@
 import numpy as np
+import math
+
+def Nearest_Neighbor(x, y, img):
+    return img[round(x)][round(y)]
+
+def Bilinear(x, y, img):
+    l = math.floor(x)
+    k = math.floor(y)
+    a = x - l
+    b = y - k
+    res = (1 - a) * (1 - b) * img[l][k] + a * (1 - b) * img[l + 1][k] + (1 - a) * b * img[l][k + 1] + a * b * img[l + 1][k + 1]
+    return round(res)
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+def Bicubic(x, y, img):
+    return 0
 
 # img1, img2 -> 2D-array with value 0 - 255
 def Add(img1, img2):
@@ -91,4 +107,23 @@ def HistogramMatch(img, pz):
         for j in range(w):
             res[i][j] = match[img[i][j]]
     return res
-    
+
+def Resize(img, h, w, interpolation = "Nearest_Neighbor"):
+    origin_h = np.size(img, 0)
+    origin_w = np.size(img, 1)
+    res = np.zeros((h, w), dtype = "uint8")
+    h_rate = origin_h / h
+    w_rate = origin_w / w
+    if interpolation == "Nearest_Neighbor":
+        for i in range(h):
+            for j in range(w):
+                res[i][j] = Nearest_Neighbor(i * h_rate, j * w_rate, img)
+    elif interpolation == "Bilinear":
+        for i in range(h):
+            for j in range(w):
+                res[i][j] = Bilinear(i * h_rate, j * w_rate, img)
+    elif interpolation == "Bicubic":
+        for i in range(h):
+            for j in range(w):
+                res[i][j] = Bicubic(i * h_rate, j * w_rate, img)
+    return res

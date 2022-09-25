@@ -256,5 +256,5 @@ def GaussainFiliter(img, size, sigma = 1, K = 1):
     for i in range(h):
         for j in range(w):
             res[i, j] = Correlation(pad, kernal, i, j)
-        print("(", i, "/", h, ")")
+        print("(", i, "/", h - 1, ")")
     return res  

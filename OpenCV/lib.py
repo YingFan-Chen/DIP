@@ -246,15 +246,15 @@ def GaussainFiliter(img, size, sigma = 1, K = 1):
     sum = 0
     for i in range(size):
         for j in range(size):
-            kernal[i, j] = K * math.e ** (((i - mid) ** 2 + (j - mid) ** 2) / (2 * (sigma ** 2)))
+            kernal[i, j] = K * math.e ** (-((i - mid) ** 2 + (j - mid) ** 2) / (2 * (sigma ** 2)))
             sum += kernal[i, j]
     for i in range(size):
         for j in range(size):
             kernal[i, j] /= sum
-    pad = Padding(img, size - 1)
+    pad = Padding(img, mid)
     res = np.zeros((h, w), dtype = "uint8")
     for i in range(h):
         for j in range(w):
             res[i, j] = Correlation(pad, kernal, i, j)
-        print("(", i, "/", h - 1, ")")
+        # print("(", i, "/", h - 1, ")")
     return res  

@@ -48,7 +48,6 @@ for i in range(h):
         res[i, j] = sum
 res1 = lib.Divide(img, res)
 res1 = lib.GammaTransformation(res1, 0.05)
-res = lib.GammaTransformation(res, 0.3)
 cv2.imshow("res", res)
 cv2.imshow("res1", res1)
 

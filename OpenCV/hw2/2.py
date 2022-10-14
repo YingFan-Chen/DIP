@@ -43,12 +43,6 @@ def Laplacian(P, Q):
             res[i, j] = - 4 * (math.pi ** 2) * (dis ** 2) 
     return res
 
-def Spec1(P, Q):
-    res = np.ones((P, Q))
-    for i in range(Q):
-        res[P // 2, i] = 0.1
-    return res
-
 def LPF(img1, filter = "ILPT", ratio = 1, n = 1):
     h1, w1 = img1.shape
     P = h1 * 2
@@ -68,17 +62,12 @@ def LPF(img1, filter = "ILPT", ratio = 1, n = 1):
         dft_filter = BLPT(P, Q, min(P, Q) * ratio, n)
     elif filter == "Laplacian":
         dft_filter = Laplacian(P, Q)
-    elif filter == "Spec1":
-        dft_filter = Spec1(P, Q)
     else:
         dft_filter = ILPT(P, Q, min(P, Q) * ratio)
 
     dft_res = np.zeros((P, Q, 2))
     dft_res[:,:,0] = dft[:,:,0] * dft_filter
     dft_res[:,:,1] = dft[:,:,1] * dft_filter
-    res_magnitude = 20*np.log(cv2.magnitude(dft_res[:,:,0], dft_res[:,:,1]))
-    plt.imshow(res_magnitude, cmap = "gray")
-    plt.show()
 
     res = cv2.idft(dft_res)[:,:,0]
     for i in range(P):
@@ -99,8 +88,7 @@ def HPF(img1, filter = "ILPT", ratio = 1, n = 1):
 
     dft = cv2.dft(np.float32(padding), flags = cv2.DFT_COMPLEX_OUTPUT)
     dft_magnitude = 20*np.log(cv2.magnitude(dft[:,:,0], dft[:,:,1]))
-    plt.imshow(dft_magnitude, cmap = "gray")
-    plt.show()
+    
     if filter == "GLPT":
         dft_filter = 1 - GLPT(P, Q, min(P, Q) * ratio)
     elif filter == "BLPT":
@@ -129,13 +117,19 @@ print(img1.shape)
 print(img2.shape)
 
 # Einstein
+res = 20 * np.log(abs(HPF(img1, "ILPT", 0.0001)))
+res = 10 * res + img1
 '''
-res = HPF(img1, "BLPT", 0.0001)
 plt.imshow(res, cmap = "gray")
 plt.show()
 '''
+plt.imsave("./images/2_Einstein.jpg", res, cmap = "gray")
 
 # phobos
-res = HPF(img2, "ILPT", 0.005)
+res = 20 * np.log(abs(HPF(img2, "ILPT", 0.0001)))
+res = res + img2
+'''
 plt.imshow(res, cmap = "gray")
 plt.show()
+'''
+plt.imsave("./images/2_phobos.jpg", res, cmap = "gray")

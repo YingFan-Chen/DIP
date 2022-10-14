@@ -1,63 +1,157 @@
+from argparse import Namespace
+from tkinter import W
 import cv2
 from matplotlib.ft2font import KERNING_UNSCALED
 import numpy as np
 import matplotlib.pyplot as plt
-img = cv2.imread("./images/keyboard.tif", cv2.IMREAD_GRAYSCALE)
+import math
+# Function
+def ILPT(P, Q, D):
+    res = np.zeros((P, Q))
+    mid = [P/2, Q/2]
+    for i in range(P):
+        for j in range(Q):
+            dis = math.dist(mid, [i, j])
+            if dis <= D:
+                res[i, j] = 1
+    return res
+
+def GLPT(P, Q, D):
+    res = np.zeros((P, Q))
+    mid = [P/2, Q/2]
+    for i in range(P):
+        for j in range(Q):
+            dis = math.dist(mid, [i, j])
+            res[i, j] = math.e ** (- dis ** 2 / (2 * D ** 2))
+    return res
+
+def BLPT(P, Q, D, n = 1):
+    res = np.zeros((P, Q))
+    mid = [P/2, Q/2]
+    for i in range(P):
+        for j in range(Q):
+            dis = math.dist(mid, [i, j])
+            res[i, j] = 1 / (1 + (dis / D) ** (2 * n))
+    return res
+
+def Laplacian(P, Q):
+    res = np.zeros((P, Q))
+    mid = [P/2, Q/2]
+    for i in range(P):
+        for j in range(Q):
+            dis = math.dist(mid, [i, j])
+            res[i, j] = - 4 * (math.pi ** 2) * (dis ** 2) 
+    return res
+
+def Spec1(P, Q):
+    res = np.ones((P, Q))
+    for i in range(Q):
+        res[P // 2, i] = 0.1
+    return res
+
+def LPF(img1, filter = "ILPT", ratio = 1, n = 1):
+    h1, w1 = img1.shape
+    P = h1 * 2
+    Q = w1 * 2 
+    padding = np.zeros((P, Q))
+    padding[h1//2:h1//2+h1, w1//2:w1//2+w1] = img1
+    for i in range(P):
+        for j in range(Q):
+            padding[i, j] *= (-1) ** (i + j)
+
+    dft = cv2.dft(np.float32(padding), flags = cv2.DFT_COMPLEX_OUTPUT)
+    dft_magnitude = 20*np.log(cv2.magnitude(dft[:,:,0], dft[:,:,1]))
+
+    if filter == "GLPT":
+        dft_filter = GLPT(P, Q, min(P, Q) * ratio)
+    elif filter == "BLPT":
+        dft_filter = BLPT(P, Q, min(P, Q) * ratio, n)
+    elif filter == "Laplacian":
+        dft_filter = Laplacian(P, Q)
+    elif filter == "Spec1":
+        dft_filter = Spec1(P, Q)
+    else:
+        dft_filter = ILPT(P, Q, min(P, Q) * ratio)
+
+    dft_res = np.zeros((P, Q, 2))
+    dft_res[:,:,0] = dft[:,:,0] * dft_filter
+    dft_res[:,:,1] = dft[:,:,1] * dft_filter
+    res_magnitude = 20*np.log(cv2.magnitude(dft_res[:,:,0], dft_res[:,:,1]))
+
+    res = abs(cv2.idft(dft_res)[:,:,0])
+    '''for i in range(P):
+        for j in range(Q):
+            res[i, j] *= (-1) ** (i + j)'''
+    res = 20*np.log(res[h1//2:h1//2+h1, w1//2:w1//2+w1])
+    return res
+
+def HPF(img1, filter = "ILPT", ratio = 1, n = 1):
+    h1, w1 = img1.shape
+    P = h1 * 2
+    Q = w1 * 2 
+    padding = np.zeros((P, Q))
+    padding[h1//2:h1//2+h1, w1//2:w1//2+w1] = img1
+    for i in range(P):
+        for j in range(Q):
+            padding[i, j] *= (-1) ** (i + j)
+
+    dft = cv2.dft(np.float32(padding), flags = cv2.DFT_COMPLEX_OUTPUT)
+    dft_magnitude = 20*np.log(cv2.magnitude(dft[:,:,0], dft[:,:,1]))
+    
+    if filter == "GLPT":
+        dft_filter = 1 - GLPT(P, Q, min(P, Q) * ratio)
+    elif filter == "BLPT":
+        dft_filter = 1 - BLPT(P, Q, min(P, Q) * ratio, n)
+    elif filter == "Laplacian":
+        dft_filter = 1 - Laplacian(P, Q)
+    else:
+        dft_filter = 1 - ILPT(P, Q, min(P, Q) * ratio)
+
+    dft_res = np.zeros((P, Q, 2))
+    dft_res[:,:,0] = dft[:,:,0] * dft_filter
+    dft_res[:,:,1] = dft[:,:,1] * dft_filter
+
+    res = cv2.idft(dft_res)
+    # res = cv2.magnitude(res[:,:,0], res[:,:,1])
+    res = abs(res[:,:,0])
+
+    '''res = cv2.idft(dft_res)[:,:,0]'''
+    '''for i in range(P):
+        for j in range(Q):
+            res[i, j] *= (-1) ** (i + j)'''
+    res = 20*np.log(res[h1//2:h1//2+h1, w1//2:w1//2+w1])
+    return res
+
+# Main
+img1 = cv2.imread("./images/Einstein.tif", cv2.IMREAD_GRAYSCALE)
+img2 = cv2.imread("./images/phobos.tif", cv2.IMREAD_GRAYSCALE)
 plt.xticks([]), plt.yticks([])
-h, w = img.shape
-print(img.shape)
+print(img1.shape)
+print(img2.shape)
 
-# (a)
-old = cv2.dft(np.float32(img), flags = cv2.DFT_COMPLEX_OUTPUT)
-old = np.fft.fftshift(old)
-plt.imshow(20*np.log(cv2.magnitude(old[:,:,0], old[:,:,1])), cmap = "gray")
+# Einstein
+plt.subplot(131)
+plt.imshow(img1, cmap = "gray")
+res = HPF(img1, "ILPT", 0.0001)
+plt.subplot(132)
+plt.imshow(res * 5 + img1, cmap = "gray")
+plt.subplot(133)
+# (good)
+plt.imshow(res * 10 + img1, cmap = "gray")
 plt.show()
+# plt.imsave("./images/2_Einstein.jpg", res, cmap = "gray")
+'''
+# phobos
+res = HPF(img2, "GLPT", 0.0001)
+res += img2
+plt.subplot(121)
+plt.imshow(res, cmap = "gray")
 
-for i in range(h):
-    for j in range(w):
-        img[i, j] *= (-1) ** (i + j)
-new = cv2.dft(np.float32(img), flags = cv2.DFT_COMPLEX_OUTPUT)
-'''for i in range(h):
-    for j in range(w):
-        new[i, j] *= (-1) ** (i + j)'''
-plt.imshow(20*np.log(cv2.magnitude(new[:,:,0], new[:,:,1])), cmap = "gray")
+#(good)
+res = HPF(img2, "ILPT", 0.0005)
+res += img2
+plt.subplot(122)
+plt.imshow(res, cmap = "gray")
 plt.show()
-
-# (b)
-kernal = np.array([[1, 0, -1], [2, 0, -2], [1, 0, -1]])
-odd_symmetry = np.zeros((4, 4))
-odd_symmetry[1:4,1:4] = kernal
-padding = np.zeros((h, w))
-padding[h//2-2:h//2+2, w//2-2:w//2+2] = odd_symmetry
-old_padding = padding
-
-for i in range(h):
-    for j in range(w):
-        padding[i, j] *= (-1) ** (i + j)
-
-dft1 = cv2.dft(np.float32(padding), flags = cv2.DFT_COMPLEX_OUTPUT)
-
-for i in range(h):
-    for j in range(w):
-        dft1[i, j, 1] *= (-1) ** (i + j)
-
-plt.imshow(dft1[:,:,1], cmap = "gray")
-plt.show()
-
-res_dft = np.zeros((h, w, 2))
-res_dft[:,:,0] = - old[:,:,1] * dft1[:,:,1]
-res_dft[:,:,1] = old[:,:,0] * dft1[:,:,1]
-res_dft = np.fft.ifftshift(res_dft)
-res1 = cv2.idft(res_dft)
-plt.imshow(res1[:,:,0], cmap = "gray")
-plt.show()
-
-res_dft = np.zeros((h, w, 2))
-res_dft[:,:,0] = - new[:,:,1] * dft1[:,:,1]
-res_dft[:,:,1] = new[:,:,0] * dft1[:,:,1]
-res2 = cv2.idft(res_dft)[:,:,0]
-for i in range(h):
-    for j in range(w):
-        res2[i, j] *= (-1) ** (i + j)
-plt.imshow(res2, cmap = "gray")
-plt.show()
+# plt.imsave("./images/2_phobos.jpg", res, cmap = "gray")
+'''

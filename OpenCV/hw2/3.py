@@ -27,10 +27,9 @@ def Ideal(u, v, d, h, w):
                 res[x, y] = 1
     return res
 
-img = plt.imread("./images/Martian terrain.tif", format="gray")
+img = cv2.imread("./images/Martian terrain.tif", cv2.IMREAD_GRAYSCALE)
 print(img.shape)
-plt.imshow(img, cmap = "gray")
-plt.show()
+h, w = img.shape
 
 shift = np.zeros((h, w))
 for x in range(h):
@@ -46,7 +45,7 @@ for x in range(h):
             mag[x, y] = 0
 plt.imshow(mag, cmap = "gray")
 plt.show()
-'''
+
 # To Do
 d = 10
 n = 1
@@ -102,4 +101,3 @@ plt.show()
 img = np.float64(img) - eta
 plt.imshow(img, cmap = "gray")
 plt.show()
-'''

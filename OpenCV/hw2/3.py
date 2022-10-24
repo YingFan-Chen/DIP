@@ -34,29 +34,29 @@ h, w = img.shape
 shift = np.zeros((h, w))
 for x in range(h):
     for y in range(w):
-        shift[x, y] = img[x, y] # * (-1) ** (x + y)
+        shift[x, y] = img[x, y] * (-1) ** (x + y)
 dft = cv2.dft(np.float32(shift), flags = cv2.DFT_COMPLEX_OUTPUT)
 
 # show spectrum image(weird that different from textbook)
 mag = 20*np.log(cv2.magnitude(dft[:,:,0], dft[:,:,1]))
-for x in range(h):
-    for y in range(w):
-        if mag[x, y] < 180:
-            mag[x, y] = 0
-plt.imshow(mag, cmap = "gray")
-plt.show()
 
 # To Do
-d = 10
+d = 30
+t = 0.3
 n = 1
-filter = np.ones((h, w))
-filter *= Butterworth(h//2, 0, n, d, h, w)
-filter *= Butterworth(h//2, w, n, d, h, w)
-filter *= Butterworth(0, w//2, n, d, h, w)
-filter *= Butterworth(h, w//2, n, d, h, w)
+filter = np.full((h, w), 1e-8)
+for x in range(h):
+    for y in range(w):
+        i, j = x - h // 2, y - w // 2
+        dis = (i ** 2 + j ** 2) ** (1 / 2)
+        if abs(i) == 0:
+            i = 1e-8
+        theta = math.atan(abs(j) / abs(i))
+        if dis > d:
+            if theta > t and theta < math.pi / 2 - t:
+                if mag[x, y] > 185:
+                    filter[x, y] = 1
 
-plt.imshow(filter, cmap = "gray")
-plt.show()
             
 N = np.zeros((h, w, 2))
 N[:,:,0] = filter * dft[:,:,0]
@@ -67,7 +67,7 @@ plt.show()
 eta = cv2.idft(N)[:,:,0]
 for x in range(h):
     for y in range(w):
-        eta[x, y] = eta[x, y] # * (-1) ** (x + y)
+        eta[x, y] = eta[x, y] * (-1) ** (x + y)
 
 weight = np.zeros((h, w))
 pad_img = np.zeros((h + 4, w + 4))

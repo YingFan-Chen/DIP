@@ -61,8 +61,6 @@ for x in range(h):
 N = np.zeros((h, w, 2))
 N[:,:,0] = filter * dft[:,:,0]
 N[:,:,1] = filter * dft[:,:,1]
-plt.imshow(20*np.log(cv2.magnitude(N[:,:,0], N[:,:,1])), cmap = "gray")
-plt.show()
 
 eta = cv2.idft(N)[:,:,0]
 for x in range(h):
@@ -95,9 +93,11 @@ for x in range(h):
             weight[x, y] = (t1 - t2 * t3) / (b1 - b2 * b2)
 
 eta *= weight
-plt.imshow(eta, cmap = "gray")
-plt.show()
+# plt.imshow(eta, cmap = "gray")
+# plt.show()
+plt.imsave("./images/3_interference_pattern.jpg", eta, cmap = "gray")
 
 img = np.float64(img) - eta
-plt.imshow(img, cmap = "gray")
-plt.show()
+# plt.imshow(img, cmap = "gray")
+# plt.show()
+plt.imsave("./images/3_restored_image.jpg", img, cmap = "gray")

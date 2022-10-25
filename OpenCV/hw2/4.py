@@ -37,17 +37,13 @@ print(img1.shape)
 kernal = motion_blur(5, 45)
 NSR = 0.001
 tmp = wiener_filter(img1, kernal, NSR)
-plt.subplot(121)
-plt.imshow(img1, cmap="gray")
-plt.subplot(122)
 tmp = np.fft.fft2(tmp)
 tmp = np.fft.fftshift(tmp)
 G = GLPT(h, w, 10)
 tmp = tmp * G
 tmp = np.fft.fftshift(tmp)
 tmp = np.fft.ifft2(tmp).real
-plt.imshow(tmp, cmap="gray", vmin=0, vmax=255)
-plt.show()
+plt.imsave("./images/4_Photographer_restored.jpg", tmp, cmap = "gray", vmin=0, vmax=255)
 
 img2 = cv2.imread("./images/Football players_degraded.tif", cv2.IMREAD_GRAYSCALE)
 h, w = img2.shape
@@ -55,8 +51,4 @@ print(img2.shape)
 kernal = motion_blur(10, 40)
 NSR = 0.001
 tmp = wiener_filter(img2, kernal, NSR)
-plt.subplot(121)
-plt.imshow(img2, cmap="gray")
-plt.subplot(122)
-plt.imshow(tmp, cmap="gray", vmin=0, vmax=255)
-plt.show()
+plt.imsave("./images/4_Football players_restored.jpg", tmp, cmap = "gray", vmin=0, vmax=255)

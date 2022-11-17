@@ -1,3 +1,4 @@
+from telnetlib import EOR
 import cv2
 import math
 from matplotlib.colors import Normalize
@@ -46,16 +47,23 @@ def particle_size(img):
             break
     return res_h, res_w 
 
-def solve_A(img, overlap, h_k, w_k):
+def solve_A(img, h_k, w_k):
     h, w = img.shape
     mid = [h_k // 2, w_k // 2]
-    res = np.zeros((h, w))
+    tmp = np.zeros((h, w))
+    res1 = np.zeros((h, w))
+    res2 = np.zeros((h, w))
     for x in range(h):
         for y in range(w):
             if img[x, y]:
-                if overlap[x-mid[0]:x-mid[0]+h_k, y-mid[1]:y-mid[1]+w_k].sum() > 1:
-                    res[x-mid[0]:x-mid[0]+h_k, y-mid[1]:y-mid[1]+w_k] = 1
-    return res
+                tmp[x-mid[0]:x-mid[0]+h_k, y-mid[1]:y-mid[1]+w_k] += 1
+    for x in range(h):
+        for y in range(w):
+            if img[x, y]:
+                if (tmp[x-mid[0]:x-mid[0]+h_k, y-mid[1]:y-mid[1]+w_k] > 1).any():
+                    res1[x, y] += 1
+                    res2[x-mid[0]:x-mid[0]+h_k, y-mid[1]:y-mid[1]+w_k] = 1 
+    return res1, res2 
 
 def vertical2dot(img):
     h, w = img.shape
@@ -81,15 +89,6 @@ def horizontal2dot(img):
                     res[x, y] = 1
     return res
 
-def sub(A, B):
-    res = A - B
-    h, w = res.shape
-    for x in range(h):
-        for y in range(w):
-            if res[x, y] == -1:
-                res[x, y] = 0
-    return res
-
 def solve_B(img, h_k, w_k):
     h, w = img.shape
     mid = [h_k // 2 + 5, w_k // 2 + 5]
@@ -102,43 +101,36 @@ def solve_B(img, h_k, w_k):
     res = np.zeros((h, w))
     for x in range(h):
         for y in range(w):
-            if tmp[x, y]:
+            if img[x, y]:
                 res[x-mid[0]:x-mid[0]+h_k, y-mid[1]:y-mid[1]+w_k] = 1
     return res
 
 if __name__ == '__main__':
     img = imread('./images/bricks.tif')
     img = np.bool_(img)
-    plot(221, img, 'Origin')
+    plot(121, img, 'Origin')
 
     # (A)
     particle = particle_size(img)
     overlap = img
 
-    for i in range(particle[0]):
-        overlap = vertical2dot(overlap)
-    plot(222, overlap, 'Overlap 1')
-
-    for i in range(particle[1]):
-        overlap = horizontal2dot(overlap)
-    plot(223, overlap, 'Overlap 2')
-
     kernel = np.ones((particle[0] - 3, particle[1] - 1))
     ero = erosion(img, kernel)
 
-    A = solve_A(ero, overlap, particle[0], particle[1])
-    plot(224, A, 'A')
+    for i in range(5):
+        ero = vertical2dot(ero)
+    for i in range(5):
+        ero = horizontal2dot(ero)
+
+    dot, A = solve_A(ero, particle[0], particle[1])
+    plot(122, A, 'A')
     show()
     save('./images/3_a.jpg', A)
 
     # (B)
-    plot(221, img, 'Origin')
-
-    tmp = sub(img, A)
-    plot(222, tmp, 'Sub')
-
-    tmp = erosion(tmp, kernel)
+    plot(121, img, 'Origin')
+    tmp = ero - dot
     B = solve_B(tmp, particle[0], particle[1])
-    plot(223, B, 'B')
+    plot(122, B, 'B')
     show()
     save('./images/3_b.jpg', B)

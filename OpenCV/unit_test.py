@@ -41,9 +41,7 @@ def sigmoidfun(img, channel = [0,1,2]):
     return res
 
 if __name__ == '__main__':
-    img = imread('./tmp.jpg')
-    plot(121, img, 'Origin')
-    improved = sigmoidfun(img)
-    plot(122, improved, 'Improved')
-    show()
-    save("./tmp_improved.jpg", improved)
+    a = [1,2,3]
+    for x in a:
+        x = 5
+    print(a)

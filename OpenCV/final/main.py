@@ -56,7 +56,13 @@ def resize(img, percentage):
 def adjust(img1, img2):
     res = img2
     d = dist(img1, img2)
-    for percentage in range(95, 100):
+    '''
+        Set range from 0.90 ~ 1.00 just for convenience.
+        However, we cannot guarantee that the argmin percentage of input can always fit in this range.
+        Therefore, perhaps to set a bigger range and do the Ternary Search.
+        Besides, Ternary Search will be necessary if we set the unit to 0.001, or it will run too long.  
+    '''
+    for percentage in range(90, 100):
         img_tmp = resize(img2, percentage / 100)
         d_tmp = dist(img1, img_tmp)
         if d > d_tmp:

@@ -24,46 +24,23 @@ def dist(img1, img2):
     assert(img1.shape == img2.shape)
     h, w, c = img1.shape
     res = 0
-    tmp = abs(img1 - img2)
-    for x in range(h):
-        for y in range(w):
-            for z in range(c):
-                res += tmp[x][y][z] * tmp[x][y][z]
+    tmp = img1 - img2
+    tmp = np.multiply(tmp, tmp)
+    res = np.sum(tmp)
     return res
-
-def bilinear(x, y, img):
-    l = math.floor(x)
-    k = math.floor(y)
-    a = x - l
-    b = y - k
-    res = (1 - a) * (1 - b) * img[l][k] + a * (1 - b) * img[l + 1][k] + (1 - a) * b * img[l][k + 1] + a * b * img[l + 1][k + 1]
-    if res > 255:
-        res = 255
-    if res < 0:
-        res = 0
-    return round(res)
 
 def resize(img, percentage):
     h, w, c = img.shape
-    mid = [h//2, w//2]
-    res = np.zeros((h, w, c), dtype="uint8")
-    for x in range(h):
-        for y in range(w):
-            for z in range(c):
-                res[x, y, z] = bilinear(percentage * (x - mid[0]) + mid[0], percentage * (y - mid[1]) + mid[1], img[:,:,z])
+    hd, wd = int(h * (1 - percentage) / 2), int(w * (1 - percentage) / 2)
+    tmp = img[hd:h-hd, wd:w-wd]
+    res = cv2.resize(tmp, (w, h), interpolation=cv2.INTER_CUBIC)
     return res
 
 def adjust(img1, img2):
     res = img2
     d = dist(img1, img2)
-    '''
-        Set range from 0.90 ~ 1.00 just for convenience.
-        However, we cannot guarantee that the argmin percentage of input can always fit in this range.
-        Therefore, perhaps to set a bigger range and do the Ternary Search.
-        Besides, Ternary Search will be necessary if we set the unit to 0.001, or it will run too long.  
-    '''
-    for percentage in range(90, 100):
-        img_tmp = resize(img2, percentage / 100)
+    for percentage in range(900, 1000):
+        img_tmp = resize(img2, percentage / 1000)
         d_tmp = dist(img1, img_tmp)
         if d > d_tmp:
             res = img_tmp

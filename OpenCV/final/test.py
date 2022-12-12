@@ -39,8 +39,8 @@ def resize(img, percentage):
 def adjust(img1, img2):
     res = img2
     d = dist(img1, img2)
-    for percentage in range(90, 100):
-        img_tmp = resize(img2, percentage / 100)
+    for percentage in range(900, 1000):
+        img_tmp = resize(img2, percentage / 1000)
         d_tmp = dist(img1, img_tmp)
         if d > d_tmp:
             res = img_tmp
@@ -48,14 +48,25 @@ def adjust(img1, img2):
         # print(d_tmp)
     return res
 
+def f(img1, img2, t):
+    print(img1.shape)
+    h, w, c = img1.shape
+    res = np.zeros((h, w, c), dtype='uint8')
+    for x in range(h):
+        for y in range(w):
+            for z in range(c):
+                res[x, y, z] = round(t * img1[x, y, z] + (1 - t) * img2[x, y, z])
+    return res
+
 if __name__ == '__main__':
-    input = []
-    for i in range(5):
-        tmp = imread("./images/" + str(i + 1) + ".jpg")
-        input.append(tmp)
-    for i in range(5):
-        if i == 0:
-            save("./images/output" + str(i + 1) + ".jpg", input[i])
-        else:
-            save("./images/output" + str(i + 1) + ".jpg", adjust(input[0], input[i]))
-    
+    img1 = imread('./images/output1.jpg')
+    img2 = imread('./images/output2.jpg')
+    img3 = imread('./images/output3.jpg')
+    print(img1.shape)
+    for i in range(10):
+        t = i / 10
+        res = img1 * t + img3 * (1 - t)
+        res = np.uint8(res)
+        plot(121, res, 'mid')
+        plot(122, img2, '2')
+        show()
